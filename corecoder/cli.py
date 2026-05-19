@@ -54,10 +54,10 @@ def main():
             "  # OpenAI\n"
             "  export OPENAI_API_KEY=sk-...\n"
             "\n"
-            "  # DeepSeek\n"
+            "  # OpenAI Compatible:\n"
             "  export OPENAI_API_KEY=sk-... OPENAI_BASE_URL=https://api.deepseek.com\n"
             "\n"
-            "  # Ollama (local)\n"
+            "  # Ollama (local):\n"
             "  export OPENAI_API_KEY=ollama OPENAI_BASE_URL=http://localhost:11434/v1 CORECODER_MODEL=qwen2.5-coder\n"
         )
         sys.exit(1)
@@ -138,7 +138,7 @@ def _repl(agent: Agent, config: Config):
                 history=history,
                 multiline=True,
                 key_bindings=kb,
-                prompt_continuation="...  ",
+                prompt_continuation="    > ",
             ).strip()
         except (EOFError, KeyboardInterrupt):
             console.print("\nBye!")

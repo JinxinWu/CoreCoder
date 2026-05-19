@@ -72,11 +72,9 @@ _PRICING = {
     "claude-sonnet-4-6": (3, 15),
     "claude-haiku-4-5": (1, 5),
     # Alibaba Qwen
-    "qwen3-max": (0.78, 3.9),
-    "qwen3-plus": (0.26, 0.78),
-    "qwen-max": (0.78, 3.9),
-    # Moonshot Kimi
-    "kimi-k2.5": (0.6, 3),
+    "qwen-flash": (0.15, 1.5),
+    "qwen3.6-plus": (2, 12),
+    "qwen3-max": (2.5, 10),
 }
 
 

@@ -46,7 +46,9 @@ class Agent:
 
     def chat(self, user_input: str, on_token=None, on_tool=None) -> str:
         """Process one user message. May involve multiple LLM/tool rounds."""
+        # 用户输入追加到上下文
         self.messages.append({"role": "user", "content": user_input})
+        # 压缩上下文（如果太大）
         self.context.maybe_compress(self.messages, self.llm)
 
         for _ in range(self.max_rounds):
@@ -68,6 +70,7 @@ class Agent:
             if len(resp.tool_calls) == 1:
                 tc = resp.tool_calls[0]
                 if on_tool:
+                    # 打印正在执行的工具
                     on_tool(tc.name, tc.arguments)
                 result = self._exec_tool(tc)
                 self.messages.append({
