@@ -77,6 +77,7 @@ def main():
         loaded = load_session(args.resume)
         if loaded:
             agent.messages, loaded_model = loaded
+            agent.session_id = args.resume
             # restore the model from the saved session unless overridden by CLI
             if not args.model:
                 agent.llm.model = loaded_model
@@ -113,6 +114,10 @@ def _repl(agent: Agent, config: Config):
         f"[bold]CoreCoder[/bold] v{__version__}\n"
         f"Model: [cyan]{config.model}[/cyan]"
         + (f"  Base: [dim]{config.base_url}[/dim]" if config.base_url else "")
+        + (f"\nWorking directory: [dim]{os.getcwd()}[/dim]" if os.getcwd() else "")
+        + (f"\nmax_tokens: [red]{config.max_tokens}[/red]" if hasattr(config, 'max_tokens') else "")
+        + (f"  temperature: [red]{config.temperature}[/red]" if hasattr(config, 'temperature') else "")
+        + (f"  max_context_tokens: [red]{config.max_context_tokens}[/red]" if hasattr(config, 'max_context_tokens') else "")
         + "\nType [bold]/help[/bold] for commands, [bold]Ctrl+C[/bold] to cancel, [bold]quit[/bold] to exit.",
         border_style="blue",
     ))
@@ -186,9 +191,7 @@ def _repl(agent: Agent, config: Config):
                 console.print(f"[dim]Nothing to compress ({before} tokens, {len(agent.messages)} messages)[/dim]")
             continue
         if user_input == "/save":
-            sid = save_session(agent.messages, config.model)
-            console.print(f"[green]Session saved: {sid}[/green]")
-            console.print(f"Resume with: corecoder -r {sid}")
+            _save_current_session(agent)
             continue
         if user_input == "/diff":
             from .tools.edit import _changed_files
@@ -230,6 +233,16 @@ def _repl(agent: Agent, config: Config):
         except Exception as e:
             console.print(f"\n[red]Error: {e}[/red]")
 
+    _save_current_session(agent)
+
+
+def _save_current_session(agent: Agent) -> str:
+    sid = save_session(agent.messages, agent.llm.model, agent.session_id)
+    agent.session_id = sid
+    console.print(f"[green]Session saved: {sid}[/green]")
+    console.print(f"Resume with: corecoder -r {sid}")
+    return sid
+
 
 def _show_help():
     console.print(Panel(
@@ -254,5 +267,6 @@ def _show_help():
 
 
 def _brief(kwargs: dict, maxlen: int = 80) -> str:
+    """Format tool kwargs for display, truncated to maxlen."""
     s = ", ".join(f"{k}={repr(v)[:40]}" for k, v in kwargs.items())
     return s[:maxlen] + ("..." if len(s) > maxlen else "")

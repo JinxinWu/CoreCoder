@@ -15,7 +15,7 @@ CoreCoder 不仅是一个 AI 编程工具。它是一份**蓝图**，编程 Agen
 
 ---
 
-```
+```bash
 $ corecoder -m kimi-k2.5
 
 You > 读一下 main.py，修掉拼错的 import
@@ -57,6 +57,7 @@ pip install corecoder
 uv run sync # 推荐使用
 
 uv tool install . # 本地全局注册
+uv tool install . --reinstall # 开发中频繁修改工具时用这个，安装前会先卸载旧版本
 uv tool install corecoder # PyPI 全局注册
 
 uv tool list  # 确认安装成功
@@ -175,22 +176,34 @@ quit             退出
 
 `cli.py`
 
+- REPL 循环，解析用户输入，调用 Agent 和工具
 - 支持 `litellm` 和 `openai compatible` 两套 API
 - `on_token` 与 `on_tool` 回调分别用于流式输出和工具调用反馈
+- 支持按照 `session id` 恢复会话，会话加载后自动保存至原文件(包括异常抛出时)
+- 用户输入追加写入 `~/.corecoder_history`
 
 `config.py`
 
+- 定义配置项，提供默认值和环境变量覆盖
 - 逐级加载 `.env` 文件，优先级：环境变量 > 当前目录 > 父目录 > ... > 根目录
 
 `llm.py`
 
+- `LLM` 类封装语言模型调用，支持流式输出和自动重试
 - `openai` 实现 OpenAI Compatible API，`litellm` 统一接口调用非 OpenAI 兼容的提供商
 - 支持流式调用、token 计数/简单计费、自动重试（异常抛出：APIError, RateLimitError, APITimeoutError, APIConnectionError）
 - `on_token` 回调每个新 token
 
+`session.py`
+
+- 存储位置：`~/.corecoder/sessions`
+- 保存/加载/列表三个功能
+
 `agent.py`
 
+- `Agent` 类实现 Agent Loop，实现工具调用、上下文管理
 - `on_tool` 回调每个工具调用，在 CLI 里用来打印正在执行的工具
+- 工具调用异常捕获，返回错误信息给模型；使用多线程并发执行多个工具调用
 
 ## 对比
 
