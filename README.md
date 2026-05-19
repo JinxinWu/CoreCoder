@@ -1,27 +1,24 @@
 # CoreCoder
 
-> Formerly **NanoCoder** — renamed to avoid confusion with [Nano-Collective/nanocoder](https://github.com/Nano-Collective/nanocoder). All links from the old repo redirect here automatically.
-
+[中文](README.md) | [Claude Code 源码深度导读（7 篇）](article/)
 
 [![PyPI](https://img.shields.io/pypi/v/corecoder)](https://pypi.org/project/corecoder/)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Tests](https://github.com/he-yufeng/CoreCoder/actions/workflows/ci.yml/badge.svg)](https://github.com/he-yufeng/CoreCoder/actions)
 
-[中文](README_CN.md) | [English](README.md) | [Claude Code Architecture Deep Dive (7 articles)](article/)
+**51万行 TypeScript → ~1,400 行 Python。**
 
-**512,000 lines of TypeScript → ~1,400 lines of Python.**
+我逆向了 Claude Code 泄露的全部源码，然后把不承重的部分全扔掉，用 Python 重建了核心。成果：**Claude Code 的每一个关键架构模式，浓缩在一个下午能读完的代码库里。**
 
-I spent two days reverse-engineering the leaked Claude Code source — all half a million lines. Then I stripped it down to the load-bearing walls and rebuilt them in Python. The result: **every key architectural pattern from Claude Code, in a codebase you can read in one sitting.**
-
-CoreCoder is not another AI coding tool. It's a **blueprint** — the [nanoGPT](https://github.com/karpathy/nanoGPT) of coding agents. Read it, fork it, build your own.
+CoreCoder 不仅是一个 AI 编程工具。它是一份**蓝图**，编程 Agent 领域的 [nanoGPT](https://github.com/karpathy/nanoGPT)。读懂它，fork 它，然后造你自己的。
 
 ---
 
 ```
 $ corecoder -m kimi-k2.5
 
-You > read main.py and fix the broken import
+You > 读一下 main.py，修掉拼错的 import
 
   > read_file(file_path='main.py')
   > edit_file(file_path='main.py', ...)
@@ -32,40 +29,49 @@ You > read main.py and fix the broken import
 -from utils import halper
 +from utils import helper
 
-Fixed: halper → helper.
+修好了：halper → helper。
 ```
 
-## What You Get
+## 你能得到什么
 
-Claude Code's 512K lines distilled into ~1,400 lines across 7 patterns that actually matter:
+Claude Code 51 万行源码提炼出来的 7 个核心模式：
 
-| Pattern | Claude Code | CoreCoder |
+| 设计模式 | Claude Code | CoreCoder |
 |---|---|---|
-| Search-and-replace editing (unique match + diff) | FileEditTool | `tools/edit.py` — 70 lines |
-| Parallel tool execution | StreamingToolExecutor (530 lines) | `agent.py` — ThreadPool |
-| 3-layer context compression | HISTORY_SNIP → Microcompact → CONTEXT_COLLAPSE | `context.py` — 145 lines |
-| Sub-agent with isolated context | AgentTool (1,397 lines) | `tools/agent.py` — 50 lines |
-| Dangerous command blocking | BashTool (1,143 lines) | `tools/bash.py` — 95 lines |
-| Session persistence | QueryEngine (1,295 lines) | `session.py` — 65 lines |
-| Dynamic system prompt | prompts.ts (914 lines) | `prompt.py` — 35 lines |
+| 搜索替换编辑（唯一匹配 + diff） | FileEditTool | `tools/edit.py` — 70 行 |
+| 并行工具执行 | StreamingToolExecutor（530行） | `agent.py` — ThreadPool |
+| 三层上下文压缩 | HISTORY_SNIP → Microcompact → CONTEXT_COLLAPSE | `context.py` — 145 行 |
+| 子代理隔离上下文 | AgentTool（1,397行） | `tools/agent.py` — 50 行 |
+| 危险命令拦截 | BashTool（1,143行） | `tools/bash.py` — 95 行 |
+| 会话持久化 | QueryEngine（1,295行） | `session.py` — 65 行 |
+| 动态系统提示词 | prompts.ts（914行） | `prompt.py` — 35 行 |
 
-Every pattern is a real, runnable implementation — not a diagram or a blog post.
+每个模式都是可运行的实现，不是流程图，不是博客文章。
 
-## Install
+## 安装
 
 ```bash
+cd /CoreCoder
+
 pip install corecoder
+uv run sync # 推荐使用
+
+uv tool install . # 本地全局注册
+uv tool install corecoder # PyPI 全局注册
+
+uv tool list  # 确认安装成功
+uv tool uninstall corecoder  # 卸载
 ```
 
-Pick your model — any OpenAI-compatible API works. You can `export` env vars or drop a `.env` file in your project root:
+选你的模型，任何 OpenAI 兼容 API 都行。可以 `export` 环境变量，也可以在项目根目录放一个 `.env` 文件：
 
 ```bash
 # Kimi K2.5
-export OPENAI_API_KEY=your-key OPENAI_BASE_URL=https://api.moonshot.ai/v1
+export OPENAI_API_KEY=你的key OPENAI_BASE_URL=https://api.moonshot.ai/v1
 corecoder -m kimi-k2.5
 
-# Claude Opus 4.6 (via OpenRouter)
-export OPENAI_API_KEY=your-key OPENAI_BASE_URL=https://openrouter.ai/api/v1
+# Claude Opus 4.6（通过 OpenRouter）
+export OPENAI_API_KEY=你的key OPENAI_BASE_URL=https://openrouter.ai/api/v1
 corecoder -m anthropic/claude-opus-4-6
 
 # OpenAI GPT-5
@@ -80,70 +86,68 @@ corecoder -m deepseek-chat
 export OPENAI_API_KEY=sk-... OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
 corecoder -m qwen-max
 
-# Ollama (local)
+# Ollama（本地）
 export OPENAI_API_KEY=ollama OPENAI_BASE_URL=http://localhost:11434/v1
 corecoder -m qwen3:32b
 
-# One-shot mode
-corecoder -p "add error handling to parse_config()"
+# 单次模式
+corecoder -p "给 parse_config() 加上错误处理"
 ```
 
-### Non-OpenAI providers (Bedrock, Vertex, Cohere, …)
-
-For providers without an OpenAI-compatible endpoint, install the optional LiteLLM extra:
-
-```bash
-pip install 'corecoder[litellm]'
-
-export CORECODER_PROVIDER=litellm
-export CORECODER_MODEL=anthropic/claude-3-haiku   # any LiteLLM model string
-export ANTHROPIC_API_KEY=sk-ant-...
-corecoder
+```text
+CORECODER_MODEL=gpt-4o
+# 可使用 OPENAI_API_KEY / DEEPSEEK_API_KEY
+CORECODER_API_KEY=sk-...
+# 可使用 CORECODER_BASE_URL
+OPENAI_BASE_URL=https://api.moonshot.ai/v1
+CORECODER_MAX_TOKENS=4096
+CORECODER_TEMPERATURE=0
+CORECODER_MAX_CONTEXT=128000
+# OpenAI Compatible / LiteLLM
+CORECODER_PROVIDER=openai
 ```
 
-LiteLLM routes through to 100+ providers (Bedrock, Vertex AI, Cohere, Groq, Replicate, Anyscale, etc.) using one model-string convention. The default `openai` backend is unchanged.
+## 架构
 
-## Architecture
+整个项目一目了然：
 
-The whole thing fits in your head:
-
-```
+```text
 corecoder/
-├── cli.py            REPL + commands               218 lines
-├── agent.py          Agent loop + parallel tools    122 lines
-├── llm.py            Streaming client + retry       156 lines
-├── context.py        3-layer compression            196 lines
-├── session.py        Save/resume                     68 lines
-├── prompt.py         System prompt                   33 lines
-├── config.py         Env config                      55 lines
+├── cli.py            REPL + 命令                   218 行
+├── agent.py          Agent 循环 + 并行执行          122 行
+├── llm.py            流式客户端 + 重试              156 行
+├── context.py        三层压缩                       196 行
+├── session.py        会话保存/恢复                   68 行
+├── prompt.py         系统提示词                      33 行
+├── config.py         环境变量配置                    55 行
 └── tools/
-    ├── bash.py       Shell + safety + cd tracking   115 lines
-    ├── edit.py       Search-replace + diff            85 lines
-    ├── read.py       File reading                     53 lines
-    ├── write.py      File writing                     36 lines
-    ├── glob_tool.py  File search                      47 lines
-    ├── grep.py       Content search                   78 lines
-    └── agent.py      Sub-agent spawning               58 lines
+    ├── bash.py       Shell + 安全 + cd 追踪         115 行
+    ├── edit.py       搜索替换 + diff                  85 行
+    ├── read.py       文件读取                         53 行
+    ├── write.py      文件写入                         36 行
+    ├── glob_tool.py  文件搜索                         47 行
+    ├── grep.py       内容搜索                         78 行
+    └── agent.py      子代理生成                       58 行
 ```
 
-## Use as a Library
+## 当库用
 
 ```python
 from corecoder import Agent, LLM
 
 llm = LLM(model="kimi-k2.5", api_key="your-key", base_url="https://api.moonshot.ai/v1")
 agent = Agent(llm=llm)
-response = agent.chat("find all TODO comments in this project and list them")
+response = agent.chat("找出项目里所有 TODO 注释并列出来")
 ```
 
-## Add Your Own Tools (~20 lines)
+## 加自定义工具（约 20 行）
 
 ```python
 from corecoder.tools.base import Tool
 
 class HttpTool(Tool):
     name = "http"
-    description = "Fetch a URL."
+    description = "请求一个 URL。"
     parameters = {"type": "object", "properties": {"url": {"type": "string"}}, "required": ["url"]}
 
     def execute(self, url: str) -> str:
@@ -151,56 +155,70 @@ class HttpTool(Tool):
         return urllib.request.urlopen(url).read().decode()[:5000]
 ```
 
-## Commands
+## 命令
 
 ```
-/model           Show current model
-/model <name>    Switch model mid-conversation
-/compact         Compress context (like Claude Code's /compact)
-/tokens          Token usage + cost estimate
-/diff            Show files modified this session
-/save            Save session to disk
-/sessions        List saved sessions
-/reset           Clear history
-quit             Exit
+/model           查看当前模型
+/model <名称>    切换模型
+/compact         压缩上下文（对标 Claude Code 的 /compact）
+/tokens          查看 token 用量 + 费用估算
+/diff            查看本次会话修改的文件
+/save            保存会话
+/sessions        列出已保存的会话
+/reset           清空历史
+quit             退出
 ```
 
-Saved session IDs are sanitized before they become filenames, so resume data stays inside `~/.corecoder/sessions`.
+保存的会话 ID 会先安全化再作为文件名，恢复数据始终留在 `~/.corecoder/sessions` 目录内。
 
-## How It Compares
+## 代码解读
+
+`cli.py`
+
+- 支持 `litellm` 和 `openai compatible` 两套 API
+- `on_token` 与 `on_tool` 回调分别用于流式输出和工具调用反馈
+
+`config.py`
+
+- 逐级加载 `.env` 文件，优先级：环境变量 > 当前目录 > 父目录 > ... > 根目录
+
+`llm.py`
+
+- `openai` 实现 OpenAI Compatible API，`litellm` 统一接口调用非 OpenAI 兼容的提供商
+- 支持流式调用、token 计数/简单计费、自动重试（异常抛出：APIError, RateLimitError, APITimeoutError, APIConnectionError）
+- `on_token` 回调每个新 token
+
+`agent.py`
+
+- `on_tool` 回调每个工具调用，在 CLI 里用来打印正在执行的工具
+
+## 对比
 
 |  | Claude Code | Claw-Code | Aider | CoreCoder |
 |---|---|---|---|---|
-| Code | 512K lines (closed) | 100K+ lines | 50K+ lines | **~1,400 lines** |
-| Models | Anthropic only | Multi | Multi | **Any OpenAI-compatible** |
-| Readable? | No | Hard | Medium | **One afternoon** |
-| Purpose | Use it | Use it | Use it | **Understand it, build yours** |
+| 代码量 | 51万行（闭源） | 10万+行 | 5万+行 | **~1,400 行** |
+| 模型 | 仅 Anthropic | 多模型 | 多模型 | **任意 OpenAI 兼容** |
+| 能通读吗？ | 不能 | 很难 | 有点费劲 | **一个下午** |
+| 适合 | 直接用 | 直接用 | 直接用 | **先看懂，再造自己的** |
 
-## The Deep Dive
+## 源码导读
 
-I wrote [7 articles](article/) breaking down Claude Code's architecture — the agent loop, tool system, context compression, streaming executor, multi-agent, and 44 hidden feature flags. If you want to understand *why* CoreCoder is designed this way, start there.
+我还写了 [7 篇 Claude Code 架构深度导读](article/)：Agent 循环、工具系统、上下文压缩、流式执行、多 Agent、隐藏功能。想知道 CoreCoder 为什么这样设计，从那里开始。
 
 ## FAQ
 
-**Does CoreCoder support Skills / Subagents / MCP?**
+**CoreCoder 支持 Skill / Subagent / MCP 吗？**
 
-No, and that's intentional. CoreCoder is the minimal runnable core — agent loop, tools, streaming, compaction. Skills, Subagents, MCP, hooks, and plugins are upper-layer features that Claude Code layers on top; if CoreCoder had them too it would stop being a teaching artifact. The architecture articles above cover how those systems work in Claude Code, so you can add them yourself if you need to.
+不支持，这是刻意的。CoreCoder 只保留可运行的最小核心 —— agent 循环、工具、流式、压缩。Skill、Subagent、MCP、hook、plugin 都是 Claude Code 在上层加的特性；如果 CoreCoder 也全都做了，就不再是一个可读的教学产物。上面的架构导读系列讲了 Claude Code 里这些系统是怎么工作的，你可以照着自己加。
 
-If you want Skills specifically, the recipe is small: scan `~/.claude/skills/*.md` at startup, list their titles in the system prompt, and let the agent ask for a skill by name before you inline that file's body into the conversation.
-
-## Related Projects
-
-- **[CodeJoust](https://github.com/he-yufeng/CodeJoust)** — a CLI arena that races Claude Code, aider, Codex, and Gemini (Cursor + OpenHands next) on the same bug in isolated git worktrees, scores by tests+cost+diff+time, hands you the winning patch. If you ever wondered *which* AI coding CLI is actually better for your task, CodeJoust answers it empirically.
-- **[AnyCoder](https://github.com/he-yufeng/AnyCoder)** — a practical terminal AI coding agent built on the same architecture as CoreCoder but with litellm, session persistence, and 100+ model support. Use this one if you want a tool; use CoreCoder if you want to read source.
-- **[LiteBench](https://github.com/he-yufeng/LiteBench)** — one-command LLM / agent benchmark. Ships 7 built-in tasks (HumanEval/GSM8K/MMLU/...) and YAML-defined custom tasks, with a single-file HTML dashboard.
-- **[RepoWiki](https://github.com/he-yufeng/RepoWiki)** — open-source DeepWiki alternative. `pip install repowiki`, one command to turn any local or GitHub repo into a wiki with dependency graph, architecture diagram, and LLM-generated module pages.
+如果你只是想要 Skill，配方很简单：启动时扫 `~/.claude/skills/*.md`，把标题列进 system prompt，让 agent 按名字请求某个 skill，再把那个文件的内容 inline 进对话就行了。
 
 ## License
 
-MIT. Fork it, learn from it, ship something better. A mention of this project is appreciated.
+MIT。Fork，然后拿去造更好的东西，如果能标注此出处就更好了。
 
 ---
 
-Built by **[Yufeng He](https://github.com/he-yufeng)** · Agentic AI Researcher @ Moonshot AI (Kimi)
+作者 **[何宇峰](https://github.com/he-yufeng)** · Agentic AI Researcher @ Moonshot AI (Kimi)
 
-[Claude Code Source Analysis — 170K+ reads, 6000 bookmarks on Zhihu](https://zhuanlan.zhihu.com/p/1898797658343862272)
+[Claude Code 源码分析（知乎 17 万阅读，6000收藏）](https://zhuanlan.zhihu.com/p/1898797658343862272)
