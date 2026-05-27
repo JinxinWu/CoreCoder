@@ -205,6 +205,22 @@ quit             退出
 - `on_tool` 回调每个工具调用，在 CLI 里用来打印正在执行的工具
 - 工具调用异常捕获，返回错误信息给模型；使用多线程并发执行多个工具调用
 
+`prompt.py`
+
+- 定义系统提示词模板，支持动态参数
+- `system_prompt` = 身份 + 工作区 + 系统环境 + python 环境 + 可用工具 + Rules
+
+`context.py`
+
+- 三层压缩：Tool Snip → Summarize → Hard Collapse
+- 兜底策略，当 LLM 不可用、超时或出错时，用正则和简单逻辑抓取两类核心信息（文件路径 + 错误信息）
+
+| 层级 | 触发条件 | 策略 | 目标 |
+|------|--------|------|------|
+| Layer 1: Tool Snip | 上下文 > 50% max_tokens | 截断工具输出（只留首尾几行） | 快速释放空间，保留“有输出”的事实 |
+| Layer 2: Summarize | 上下文 > 70% 且消息数 >10 | 用 LLM 总结旧对话，保留最近 8 条 | 保留语义，大幅压缩 |
+| Layer 3: Hard Collapse | 上下文 > 90% | 丢弃几乎所有历史，仅保留摘要 + 最近 4 条 | 最后手段，避免崩溃 |
+
 ## 对比
 
 |  | Claude Code | Claw-Code | Aider | CoreCoder |

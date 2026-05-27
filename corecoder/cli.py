@@ -122,6 +122,7 @@ def _repl(agent: Agent, config: Config):
         border_style="blue",
     ))
 
+    # 将用户输入的历史记录保存到文件，并在下次启动时加载，实现“按上下箭头翻看历史命令”的功能
     hist_path = os.path.expanduser("~/.corecoder_history")
     history = FileHistory(hist_path)
 
